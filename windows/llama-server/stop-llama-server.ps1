@@ -1,14 +1,22 @@
-# Stops the llama-server router and every model child process it spawned,
-# and waits until they have actually exited (the GPU memory is released only
-# then, and the start script must not mistake a dying process for a live one).
-$procs = @(Get-Process llama-server -ErrorAction SilentlyContinue)
-if ($procs.Count -eq 0) { Write-Output "llama-server is not running."; exit 0 }
-$procs | Stop-Process -Force -Confirm:$false -ErrorAction SilentlyContinue
-$deadline = (Get-Date).AddSeconds(30)
-while ((Get-Process llama-server -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
-$left = @(Get-Process llama-server -ErrorAction SilentlyContinue)
-if ($left.Count -gt 0) {
-    Write-Warning "$($left.Count) llama-server process(es) still exiting after 30 s."
+# Stops the notebook's llama-server router and the model helper processes it
+# spawned, and waits until they have actually exited (the GPU memory is
+# released only then).
+#
+# Only the notebook's own server is touched. It is identified by the process
+# identity recorded by start-llama-server.ps1 (process id + start time), or,
+# if that record is missing, by a command line that names this folder's
+# models.ini. Its models are unloaded through its own API on port 8080 first
+# (after checking that the process listening there is ours), then that one
+# process and its helpers (children of that process) are ended. Any other
+# llama-server.exe on this PC is left alone.
+
+$ErrorActionPreference = 'Stop'
+Import-Module (Join-Path (Split-Path -Parent $PSScriptRoot) 'notebook-control\NotebookControl.psm1') -Force
+try {
+    $r = Stop-NotebookLlamaServer
+} catch {
+    Write-Error $_.Exception.Message
     exit 1
 }
-Write-Output "Stopped $($procs.Count) llama-server process(es)."
+if (-not $r.WasRunning) { exit 0 }
+if (-not $r.AllGone) { exit 1 }

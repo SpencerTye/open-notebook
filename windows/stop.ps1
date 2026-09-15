@@ -1,17 +1,20 @@
-# Stops the Open Notebook containers and llama-server. Data is kept
-# (open-notebook\surreal_data and open-notebook\notebook_data are untouched).
-# Docker Desktop itself is left running; quit it from its tray icon if you want.
+# Stops the Open Notebook containers and the notebook's own llama-server from
+# a terminal. Data is kept (open-notebook\surreal_data and
+# open-notebook\notebook_data are untouched). Docker Desktop is left running.
+#
+# Only the notebook's own model server is touched: it is identified by the
+# process identity recorded at start (or by a command line naming our
+# models.ini), its models are unloaded through its API, and then that one
+# process and its helpers are ended. Other llama-server processes on this PC
+# are never touched. The logic lives in notebook-control\NotebookControl.psm1.
 #
 # Run from anywhere:  powershell -ExecutionPolicy Bypass -File "S:\RAG Notebooks\stop.ps1"
 
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$dockerBin = Join-Path $env:LOCALAPPDATA "Programs\DockerDesktop\resources\bin"
-if (Test-Path $dockerBin) { $env:Path = "$dockerBin;$env:Path" }
-
-Write-Output "[1/2] Open Notebook containers"
-Push-Location (Join-Path $root "open-notebook")
-docker compose down
-Pop-Location
-
-Write-Output "[2/2] llama-server"
-powershell -ExecutionPolicy Bypass -File (Join-Path $root "llama-server\stop-llama-server.ps1")
+$ErrorActionPreference = 'Stop'
+Import-Module (Join-Path $PSScriptRoot 'notebook-control\NotebookControl.psm1') -Force
+try {
+    $r = Stop-Notebook
+} catch {
+    Write-Error $_.Exception.Message
+    exit 1
+}
