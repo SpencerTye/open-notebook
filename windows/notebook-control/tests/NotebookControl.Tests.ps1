@@ -23,7 +23,7 @@ function New-Proc([int]$ProcessId, [int]$ParentProcessId, [string]$Name, [string
     }
 }
 
-$router = New-Proc 10480 13920 'llama-server.exe' "`"$exe`" --models-preset `"$iniPath`" --host 0.0.0.0 --port 8080 --models-max 2" $t0
+$router = New-Proc 10480 13920 'llama-server.exe' "`"$exe`" --models-preset `"$iniPath`" --host 0.0.0.0 --port 8080 --models-max 2 --no-models-autoload" $t0
 $helperEmbed = New-Proc 33336 10480 'llama-server.exe' "`"$exe`" --embeddings --host 127.0.0.1 --pooling last --port 52248 --alias qwen3-embedding-4b --model `"S:/RAG Notebooks/llama-server/models/Qwen3-Embedding-4B-Q8_0.gguf`" --n-gpu-layers 999" $t0.AddSeconds(102)
 $helperChat  = New-Proc 30976 10480 'llama-server.exe' "`"$exe`" --host 127.0.0.1 --port 58892 --alias gemma-4-26b-a4b --model `"S:/RAG Notebooks/llama-server/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`" --n-gpu-layers 999" $t0.AddHours(4)
 # Another llama.cpp router the operator runs for something else: same program name, different preset file.
@@ -440,6 +440,30 @@ Describe 'New-ActionArgumentList' {
         $r.ExitCode | Should Not Be 0
         $r.StdErr | Should Not Match "does not have a '.ps1' extension"
         $r.StdErr | Should Match 'nothing'
+    }
+}
+
+Describe 'New-LlamaServerArgumentList' {
+    # The exact command line Start-NotebookLlamaServer hands to llama-server.
+    $paths = Get-NotebookControlPaths
+    $list = @(New-LlamaServerArgumentList)
+
+    It 'names our models.ini as the preset, quoted because the path contains a space' {
+        $i = [array]::IndexOf($list, '--models-preset')
+        $i | Should Not Be -1
+        $list[$i + 1] | Should Match ([regex]::Escape($paths.ModelsIni))
+        $list[$i + 1] | Should Match '^"'
+    }
+
+    It 'listens on all interfaces on port 8080 with at most two models resident' {
+        $list[[array]::IndexOf($list, '--host') + 1] | Should Be '0.0.0.0'
+        $list[[array]::IndexOf($list, '--port') + 1] | Should Be '8080'
+        $list[[array]::IndexOf($list, '--models-max') + 1] | Should Be '2'
+    }
+
+    It 'turns autoload off: no model loads unless the operator asks for it (instruction of 2026-09-15)' {
+        ($list -contains '--no-models-autoload') | Should Be $true
+        ($list -contains '--models-autoload') | Should Be $false
     }
 }
 

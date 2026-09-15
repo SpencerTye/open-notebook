@@ -780,6 +780,22 @@ function Stop-NotebookLlamaServer {
     return $result
 }
 
+function New-LlamaServerArgumentList {
+    # The command line handed to llama-server (router mode).
+    # --no-models-autoload: the server loads a model only when asked to through
+    # its /models/load call (the tray, the Model memory panel) or through the
+    # load-on-startup lines in models.ini. A chat or embedding request naming a
+    # model that is not loaded fails instead of loading it. Operator instruction
+    # of 2026-09-15: nothing may load a model without the operator's action.
+    return @(
+        '--models-preset', (ConvertTo-CommandLineArgument $script:ModelsIni),
+        '--host', '0.0.0.0',
+        '--port', "$script:LlamaPort",
+        '--models-max', '2',
+        '--no-models-autoload'
+    )
+}
+
 function Start-NotebookLlamaServer {
     # Starts the notebook's model server (router mode, our models.ini, port 8080)
     # unless it is already running and healthy. A server of ours that does not
@@ -828,13 +844,8 @@ function Start-NotebookLlamaServer {
     }
 
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-    $argumentList = @(
-        '--models-preset', (ConvertTo-CommandLineArgument $script:ModelsIni),
-        '--host', '0.0.0.0',
-        '--port', "$script:LlamaPort",
-        '--models-max', '2'
-    )
-    Write-ControlLog 'Model server: starting llama-server (router mode)...'
+    $argumentList = @(New-LlamaServerArgumentList)
+    Write-ControlLog 'Model server: starting llama-server (router mode, autoload off)...'
     $p = Start-Process -FilePath $script:LlamaExe -ArgumentList $argumentList -WorkingDirectory $script:LlamaDir `
         -RedirectStandardOutput (Join-Path $script:LlamaLogDir "llama-server-$stamp.out.log") `
         -RedirectStandardError  (Join-Path $script:LlamaLogDir "llama-server-$stamp.err.log") `
@@ -853,7 +864,7 @@ function Start-NotebookLlamaServer {
     if (-not $healthy -or -not $ownsPort) {
         throw "llama-server (pid $($p.Id)) started but is not answering on port $script:LlamaPort as expected. Check $script:LlamaLogDir\llama-server-$stamp.err.log"
     }
-    Write-ControlLog "Model server: started (pid $($p.Id)); the chat model loads in the background (about 30 s)."
+    Write-ControlLog "Model server: started (pid $($p.Id)); no model is loaded until you load one (tray menu or Model memory panel)."
     return [pscustomobject]@{ Started = $true; AlreadyRunning = $false; Pid = [int]$p.Id; Message = "Model server started (pid $($p.Id))" }
 }
 
