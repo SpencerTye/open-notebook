@@ -160,7 +160,11 @@ export function AppSidebar() {
 
         <nav
           className={cn(
-            'flex-1 space-y-1 py-4',
+            // LOCAL: min-h-0 + overflow-y-auto. The sidebar is a fixed-height
+            // column inside a shell that clips overflow; on a short window the
+            // menu must scroll, or the bottom block (theme, language, sign
+            // out) is pushed out of view with no way to reach it.
+            'flex-1 min-h-0 overflow-y-auto space-y-1 py-4',
             isCollapsed ? 'px-2' : 'px-3'
           )}
         >
@@ -295,7 +299,9 @@ export function AppSidebar() {
 
         <div
           className={cn(
-            'border-t border-sidebar-border p-3 space-y-2',
+            // LOCAL: shrink-0 keeps this block its full size; the nav above
+            // gives way (scrolls) instead.
+            'shrink-0 border-t border-sidebar-border p-3 space-y-2',
             isCollapsed && 'px-2'
           )}
         >

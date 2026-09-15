@@ -76,7 +76,17 @@ describe('LlmControl', () => {
     expect(switches[1]).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByText('Chat model')).toBeInTheDocument()
     expect(screen.getByText('Embedding model')).toBeInTheDocument()
-    expect(screen.getByText('gemma-4-26b-a4b')).toBeInTheDocument()
+  })
+
+  // Compact layout (2026-09-15): the panel sits in the sidebar's bottom block,
+  // which must stay short so the menu above keeps its room on small windows.
+  it('shows each model id on hover instead of as a second line', () => {
+    arrange(status())
+    render(<LlmControl />)
+    expect(screen.queryByText('gemma-4-26b-a4b')).toBeNull()
+    expect(screen.queryByText('qwen3-embedding-4b')).toBeNull()
+    expect(screen.getByText('Chat model').closest('[title="gemma-4-26b-a4b"]')).not.toBeNull()
+    expect(screen.getByText('Embedding model').closest('[title="qwen3-embedding-4b"]')).not.toBeNull()
   })
 
   it('unloads a loaded model and loads an unloaded one when its switch is clicked', () => {
@@ -89,10 +99,11 @@ describe('LlmControl', () => {
     expect(mutate).toHaveBeenLastCalledWith({ model: 'qwen3-embedding-4b', action: 'load' })
   })
 
-  it('shows GPU memory in use as gigabytes', () => {
+  it('shows GPU memory in use as gigabytes on the title line, with its label on hover', () => {
     arrange(status())
     render(<LlmControl />)
-    expect(screen.getByText('17.2 / 24.0 GB')).toBeInTheDocument()
+    expect(screen.getByTitle('GPU memory in use')).toHaveTextContent('17.2 / 24.0 GB')
+    expect(screen.queryByText('GPU memory in use')).toBeNull()
   })
 
   it('disables a switch while its model is loading and says so', () => {

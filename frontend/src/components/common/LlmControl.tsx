@@ -3,8 +3,13 @@
 // LOCAL addition (not upstream): the model-memory (VRAM) control in the
 // sidebar. One switch per model the llama.cpp server knows about: on = the
 // model's weights are in GPU memory, off = they are not. Flipping a switch
-// asks the server to load or unload that model; the status underneath is what
+// asks the server to load or unload that model; the status next to it is what
 // the server reports, refreshed every few seconds.
+//
+// Compact on purpose (2026-09-15): the panel lives in the sidebar's bottom
+// block, which must stay short so the menu above keeps its room on small
+// windows. The title line carries the GPU figure (label on hover) and each
+// model is one line (id on hover).
 //
 // English only on purpose: this build serves one operator, so the upstream
 // rule "every string in all 14 locales" is not applied here.
@@ -14,7 +19,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useLlmStatus, useLlmModelAction } from '@/lib/hooks/use-llm-control'
-import { isModelBusy, type LlmModelState } from '@/lib/api/llm-control'
+import { isModelBusy, type LlmModelState, type LlmStatus } from '@/lib/api/llm-control'
 
 const TEXT = {
   title: 'Model memory',
@@ -102,63 +107,64 @@ function Switch({ checked, disabled = false, label, onClick }: SwitchProps) {
   )
 }
 
+function Header({ data }: { data: LlmStatus | undefined }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+        <MemoryStick className="h-3 w-3" />
+        {TEXT.title}
+      </span>
+      {data?.gpu ? (
+        <span title={TEXT.gpu} className="shrink-0 font-mono text-xs text-muted-foreground">
+          {formatGb(data.gpu.used_mib)} / {formatGb(data.gpu.total_mib)} GB
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 function Panel() {
   const { data, isLoading } = useLlmStatus()
   const action = useLlmModelAction()
 
+  let body: React.ReactNode
   if (isLoading || !data) {
-    return <p className="text-xs text-muted-foreground">{TEXT.checking}</p>
+    body = <p className="text-xs text-muted-foreground">{TEXT.checking}</p>
+  } else if (!data.reachable) {
+    body = (
+      <p className="text-xs text-destructive" title={data.error ?? undefined}>
+        {TEXT.unreachable}
+      </p>
+    )
+  } else if (data.models.length === 0) {
+    body = <p className="text-xs text-muted-foreground">{TEXT.noModels}</p>
+  } else {
+    body = data.models.map((model) => {
+      const inFlight = action.pendingModel === model.id
+      const busy = inFlight || isModelBusy(model.status)
+      const on = isOn(model)
+      const label = modelLabel(model)
+      return (
+        <div key={model.id} title={model.id} className="flex items-center gap-2 text-xs">
+          <Switch
+            checked={on}
+            disabled={busy}
+            label={label}
+            onClick={() => action.mutate({ model: model.id, action: on ? 'unload' : 'load' })}
+          />
+          <span className="min-w-0 flex-1 truncate text-sidebar-foreground">{label}</span>
+          <span className={cn('shrink-0', statusColor(model, inFlight))}>
+            {statusText(model, inFlight)}
+          </span>
+        </div>
+      )
+    })
   }
 
-  const gpuText = data.gpu
-    ? `${formatGb(data.gpu.used_mib)} / ${formatGb(data.gpu.total_mib)} GB`
-    : '—'
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span>{TEXT.gpu}</span>
-        <span className="font-mono">{gpuText}</span>
-      </div>
-
-      {!data.reachable ? (
-        <p className="text-xs text-destructive" title={data.error ?? undefined}>
-          {TEXT.unreachable}
-        </p>
-      ) : data.models.length === 0 ? (
-        <p className="text-xs text-muted-foreground">{TEXT.noModels}</p>
-      ) : (
-        data.models.map((model) => {
-          const inFlight = action.pendingModel === model.id
-          const busy = inFlight || isModelBusy(model.status)
-          const on = isOn(model)
-          const label = modelLabel(model)
-          return (
-            <div key={model.id} className="flex items-center gap-2">
-              <Switch
-                checked={on}
-                disabled={busy}
-                label={label}
-                onClick={() => action.mutate({ model: model.id, action: on ? 'unload' : 'load' })}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="truncate text-sidebar-foreground">{label}</span>
-                  <span className={cn('shrink-0', statusColor(model, inFlight))}>
-                    {statusText(model, inFlight)}
-                  </span>
-                </div>
-                <div
-                  className="truncate font-mono text-[10px] text-muted-foreground"
-                  title={model.id}
-                >
-                  {model.id}
-                </div>
-              </div>
-            </div>
-          )
-        })
-      )}
+    <div className="space-y-1.5">
+      <Header data={data} />
+      {body}
     </div>
   )
 }
@@ -195,10 +201,6 @@ export function LlmControl({ collapsed = false }: LlmControlProps) {
           </Button>
         </PopoverTrigger>
         <PopoverContent side="right" align="end" className="w-72">
-          <div className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-            <MemoryStick className="h-4 w-4" />
-            {TEXT.title}
-          </div>
           <Panel />
         </PopoverContent>
       </Popover>
@@ -207,10 +209,6 @@ export function LlmControl({ collapsed = false }: LlmControlProps) {
 
   return (
     <div className="rounded-md border border-sidebar-border bg-sidebar-accent/30 px-3 py-2">
-      <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-        <MemoryStick className="h-3 w-3" />
-        {TEXT.title}
-      </div>
       <Panel />
     </div>
   )

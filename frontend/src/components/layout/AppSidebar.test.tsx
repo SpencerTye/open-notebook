@@ -56,6 +56,27 @@ describe('AppSidebar', () => {
     expect(screen.queryByText('common.appName')).toBeNull()
   })
 
+  // LOCAL: on a short window the sidebar's content is taller than the window.
+  // The app shell clips overflow, so without these rules the bottom block
+  // (theme, language, sign out) is pushed out of view with no way to reach it
+  // (seen at 1366x768 on 2026-09-15). The menu section must scroll instead,
+  // and the bottom block must keep its size.
+  it('lets the menu section scroll on short windows and keeps the bottom block its full size', () => {
+    vi.mocked(useSidebarStore).mockReturnValue({
+      isCollapsed: false,
+      toggleCollapse: vi.fn(),
+    } as any)
+
+    const { container } = render(<AppSidebar />)
+
+    const nav = container.querySelector('nav')
+    expect(nav).not.toBeNull()
+    expect(nav!.className).toContain('min-h-0')
+    expect(nav!.className).toContain('overflow-y-auto')
+    const bottomBlock = nav!.nextElementSibling as HTMLElement
+    expect(bottomBlock.className).toContain('shrink-0')
+  })
+
   it('hosts the model-memory control and tells it the collapse state', () => {
     vi.mocked(useSidebarStore).mockReturnValue({
       isCollapsed: true,
