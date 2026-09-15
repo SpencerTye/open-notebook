@@ -416,8 +416,14 @@ async def create_insight_command(
 
     Flow:
     1. CREATE source_insight record in database
-    2. Submit embed_insight command (fire-and-forget) for async embedding
-    3. Return the insight_id
+    2. Return the insight_id
+
+    LOCAL: upstream also queued an embed_insight job here (fire-and-forget).
+    In this build nothing is queued after the insight is written: the operator
+    keeps one model loaded at a time, so that job would only fail against an
+    unloaded embedder and occupy the single worker slot while retrying.
+    Insights are embedded on demand through Manage -> Advanced -> Rebuild
+    Embeddings (mode "All", Insights ticked) once the embedder is loaded.
 
     Retry Strategy:
     - Retries up to 5 times for transient failures (network, timeout, etc.)
@@ -455,13 +461,11 @@ async def create_insight_command(
         if not insight_id:
             raise ValueError("Failed to create insight - no ID in result")
 
-        # 2. Submit embedding command (fire-and-forget)
-        submit_command(
-            "open_notebook",
-            "embed_insight",
-            {"insight_id": insight_id},
+        # LOCAL: no embed_insight job is queued here (see the docstring).
+        logger.info(
+            f"Insight {insight_id} left unembedded on purpose; "
+            "embed it later via Rebuild Embeddings (Insights)"
         )
-        logger.debug(f"Submitted embed_insight command for {insight_id}")
 
         processing_time = time.time() - start_time
         logger.info(
