@@ -12,6 +12,14 @@ vi.mock('@/components/ui/tooltip', () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
+// LOCAL: the sidebar hosts the model-memory (VRAM) control, which needs a
+// QueryClient; stand it in here so the sidebar tests stay independent of it.
+vi.mock('@/components/common/LlmControl', () => ({
+  LlmControl: ({ collapsed }: { collapsed?: boolean }) => (
+    <div data-testid="llm-control" data-collapsed={collapsed ? 'true' : 'false'} />
+  ),
+}))
+
 describe('AppSidebar', () => {
   it('renders correctly when expanded', () => {
     render(<AppSidebar />)
@@ -46,5 +54,16 @@ describe('AppSidebar', () => {
 
     // In collapsed mode, app name shouldn't be visible (as text)
     expect(screen.queryByText('common.appName')).toBeNull()
+  })
+
+  it('hosts the model-memory control and tells it the collapse state', () => {
+    vi.mocked(useSidebarStore).mockReturnValue({
+      isCollapsed: true,
+      toggleCollapse: vi.fn(),
+    } as any)
+
+    render(<AppSidebar />)
+
+    expect(screen.getByTestId('llm-control')).toHaveAttribute('data-collapsed', 'true')
   })
 })

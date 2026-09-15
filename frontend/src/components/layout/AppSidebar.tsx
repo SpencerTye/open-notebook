@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { LanguageToggle } from '@/components/common/LanguageToggle'
+import { LlmControl } from '@/components/common/LlmControl' // LOCAL: model-memory (VRAM) control
 import type { TFunction } from 'i18next'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { Separator } from '@/components/ui/separator'
@@ -298,6 +299,9 @@ export function AppSidebar() {
             isCollapsed && 'px-2'
           )}
         >
+          {/* LOCAL: which models sit in GPU memory, with a switch per model */}
+          <LlmControl collapsed={isCollapsed} />
+
           {/* Command Palette hint */}
           {!isCollapsed && (
             <div className="px-3 py-1.5 text-xs text-sidebar-foreground/60">

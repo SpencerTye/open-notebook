@@ -46,6 +46,7 @@ from api.routers import (
     transformations,
 )
 from api.routers import commands as commands_router
+from api.routers import llm_control  # LOCAL: model-memory (VRAM) control
 from open_notebook.database.async_migrate import AsyncMigrationManager
 from open_notebook.exceptions import (
     AuthenticationError,
@@ -404,6 +405,7 @@ app.include_router(credentials.router, prefix="/api", tags=["credentials"])
 app.include_router(providers.router, prefix="/api", tags=["providers"])
 app.include_router(capabilities.router, prefix="/api", tags=["capabilities"])
 app.include_router(languages.router, prefix="/api", tags=["languages"])
+app.include_router(llm_control.router, prefix="/api", tags=["llm-control"])  # LOCAL
 
 
 @app.get("/")
