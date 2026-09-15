@@ -109,13 +109,13 @@ function Switch({ checked, disabled = false, label, onClick }: SwitchProps) {
 
 function Header({ data }: { data: LlmStatus | undefined }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
-        <MemoryStick className="h-3 w-3" />
-        {TEXT.title}
+    <div className="flex items-center justify-between gap-1">
+      <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
+        <MemoryStick className="h-3 w-3 shrink-0" />
+        <span className="truncate">{TEXT.title}</span>
       </span>
       {data?.gpu ? (
-        <span title={TEXT.gpu} className="shrink-0 font-mono text-xs text-muted-foreground">
+        <span title={TEXT.gpu} className="shrink-0 font-mono text-[11px] text-muted-foreground">
           {formatGb(data.gpu.used_mib)} / {formatGb(data.gpu.total_mib)} GB
         </span>
       ) : null}
