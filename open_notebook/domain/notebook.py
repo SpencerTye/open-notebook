@@ -398,6 +398,14 @@ class SourceInsight(ObjectModel):
             await note.add_to_notebook(notebook_id)
         return note
 
+    async def delete(self) -> bool:
+        # LOCAL: the insight's vector leaves the TurboVec index with the row.
+        deleted = await super().delete()
+        from open_notebook.vector_index.client import index_remove
+
+        await index_remove(ids=[str(self.id)])
+        return deleted
+
 
 class Source(ObjectModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -670,6 +678,11 @@ class Source(ObjectModel):
                 {"source_id": source_id},
             )
             logger.debug(f"Deleted embeddings and insights for source {self.id}")
+            # LOCAL: drop the source's chunk and insight vectors from the
+            # TurboVec index as well.
+            from open_notebook.vector_index.client import index_remove
+
+            await index_remove(sources=[str(self.id)])
         except Exception as e:
             logger.warning(
                 f"Failed to delete embeddings/insights for source {self.id}: {e}. "
@@ -746,6 +759,14 @@ class Note(ObjectModel):
                 content=self.content[:100] if self.content else None,
             )
 
+    async def delete(self) -> bool:
+        # LOCAL: the note's vector leaves the TurboVec index with the row.
+        deleted = await super().delete()
+        from open_notebook.vector_index.client import index_remove
+
+        await index_remove(ids=[str(self.id)])
+        return deleted
+
 
 class ChatSession(ObjectModel):
     table_name: ClassVar[str] = "chat_session"
@@ -812,6 +833,7 @@ async def vector_search(
     source: bool = True,
     note: bool = True,
     minimum_score=0.2,
+    notebook_id: Optional[str] = None,  # LOCAL: limit to one notebook (index engine only)
 ):
     if not keyword:
         raise InvalidInputError("Search keyword cannot be empty")
@@ -820,6 +842,20 @@ async def vector_search(
 
         # Use unified embedding function (handles chunking if query is very long)
         embed = await generate_embedding(keyword)
+
+        # LOCAL: with OPEN_NOTEBOOK_VECTOR_ENGINE=turbovec the in-process index
+        # answers (candidates from the index, exact re-scoring from the
+        # database, same rows as fn::vector_search). None means the engine is
+        # "scan" or the index is not ready; then the database scan below runs
+        # exactly as upstream (it ignores notebook_id).
+        from open_notebook.vector_index.search import search_with_index
+
+        indexed = await search_with_index(
+            embed, results, source, note, minimum_score, notebook_id
+        )
+        if indexed is not None:
+            return indexed
+
         search_results = await repo_query(
             """
             SELECT * FROM fn::vector_search($embed, $results, $source, $note, $minimum_score);

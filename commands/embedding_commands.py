@@ -44,6 +44,38 @@ def get_command_id(input_data: CommandInput) -> str:
     return "unknown"
 
 
+async def _index_upsert(
+    ids: List[str], replace_sources: Optional[List[str]] = None
+) -> None:
+    """LOCAL: tell the API's TurboVec index which vectors were just written.
+
+    Never raises: the vectors are already in the database, and the API's
+    startup check repairs the index if this message is lost.
+    """
+    try:
+        from open_notebook.vector_index.client import index_upsert
+
+        await index_upsert(ids, replace_sources=replace_sources or [])
+    except Exception as e:
+        logger.warning(f"vector index notification failed: {e}")
+
+
+async def _inserted_chunk_ids(inserted: Any, source_id: str) -> List[str]:
+    """LOCAL: the ids of the chunk records just written for a source."""
+    ids: List[str] = []
+    if isinstance(inserted, list):
+        for row in inserted:
+            if isinstance(row, dict) and row.get("id"):
+                ids.append(str(row["id"]))
+    if not ids:
+        rows = await repo_query(
+            "SELECT VALUE id FROM source_embedding WHERE source = $source_id",
+            {"source_id": ensure_record_id(source_id)},
+        )
+        ids = [str(row) for row in rows or []]
+    return ids
+
+
 async def _embed_record(
     input_data: CommandInput,
     *,
@@ -130,6 +162,9 @@ async def _embed_markdown_record(
             "embedding": embedding,
         },
     )
+
+    # LOCAL: the API owns the TurboVec index; tell it this vector changed.
+    await _index_upsert([record_id])
 
     return {}, ""
 
@@ -383,7 +418,14 @@ async def embed_source_command(input_data: EmbedSourceInput) -> EmbedSourceOutpu
         ]
 
         logger.debug(f"Inserting {len(records)} source_embedding records")
-        await repo_insert("source_embedding", records)
+        inserted = await repo_insert("source_embedding", records)
+
+        # LOCAL: the API owns the TurboVec index; replace this source's chunk
+        # vectors there with the ones just written.
+        await _index_upsert(
+            await _inserted_chunk_ids(inserted, input_data.source_id),
+            replace_sources=[input_data.source_id],
+        )
 
         return {"chunks_created": total_chunks}, f": {total_chunks} chunks"
 

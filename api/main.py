@@ -34,6 +34,7 @@ from api.routers import (
     episode_profiles,
     insights,
     languages,
+    llm_control,  # LOCAL: model-memory (VRAM) control
     models,
     notebooks,
     notes,
@@ -45,9 +46,9 @@ from api.routers import (
     sources,
     speaker_profiles,
     transformations,
+    vector_index,  # LOCAL: TurboVec index endpoints
 )
 from api.routers import commands as commands_router
-from api.routers import llm_control  # LOCAL: model-memory (VRAM) control
 from open_notebook.database.async_migrate import AsyncMigrationManager
 from open_notebook.exceptions import (
     AuthenticationError,
@@ -209,12 +210,30 @@ async def lifespan(app: FastAPI):
         # Fail fast - don't start the API with an outdated database schema
         raise RuntimeError(f"Failed to run database migrations: {str(e)}") from e
 
+    # LOCAL: open the TurboVec index (files under OPEN_NOTEBOOK_VECTOR_INDEX_DIR)
+    # and check it against the database in the background. A failure here
+    # leaves vector search on the database scan; it never stops the API.
+    try:
+        from open_notebook.vector_index import store as vector_store
+
+        await vector_store.open_from_env()
+    except Exception as e:
+        logger.error(f"vector index unavailable, searches use the database scan: {e}")
+        logger.exception(e)
+
     logger.success("API initialization completed successfully")
 
     # Yield control to the application
     yield
 
     # Shutdown: cleanup if needed
+    # LOCAL: write the index files one last time.
+    try:
+        from open_notebook.vector_index import store as vector_store
+
+        await vector_store.close()
+    except Exception as e:
+        logger.warning(f"vector index close failed: {e}")
     logger.info("API shutdown complete")
 
 
@@ -410,6 +429,7 @@ app.include_router(llm_control.router, prefix="/api", tags=["llm-control"])  # L
 app.include_router(  # LOCAL: notebook-wide transformations
     batch_transformations.router, prefix="/api", tags=["batch-transformations"]
 )
+app.include_router(vector_index.router, prefix="/api", tags=["vector-index"])  # LOCAL
 
 
 @app.get("/")
