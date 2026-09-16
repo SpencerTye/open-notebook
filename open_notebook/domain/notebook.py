@@ -343,6 +343,10 @@ class SourceInsight(ObjectModel):
     table_name: ClassVar[str] = "source_insight"
     insight_type: str
     content: str
+    # LOCAL: whether the record has a vector, as computed by the database in
+    # Source.get_insights(); None when the row was read without that
+    # projection. Excluded from model_dump(), so save() never writes it.
+    embedded: Optional[bool] = Field(default=None, exclude=True)
 
     @classmethod
     async def get_for_sources(
@@ -519,9 +523,14 @@ class Source(ObjectModel):
 
     async def get_insights(self) -> List[SourceInsight]:
         try:
+            # LOCAL: one boolean per insight says whether it has a vector (the
+            # same test the Missing rebuild mode uses); the vector itself is
+            # left in the database.
             result = await repo_query(
                 """
-                SELECT * FROM source_insight WHERE source=$id
+                SELECT *, (embedding != NONE AND array::len(embedding) > 0) AS embedded
+                OMIT embedding
+                FROM source_insight WHERE source=$id
                 """,
                 {"id": ensure_record_id(self.id)},
             )

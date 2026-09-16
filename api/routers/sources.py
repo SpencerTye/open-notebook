@@ -1089,6 +1089,8 @@ async def get_source_insights(source_id: str):
                 content=insight.content,
                 created=insight.created.isoformat() if insight.created else None,
                 updated=insight.updated.isoformat() if insight.updated else None,
+                # LOCAL: the embedded / not embedded mark shown on the Insights tab.
+                embedded=insight.embedded,
             )
             for insight in insights
         ]

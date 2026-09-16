@@ -634,6 +634,17 @@ function SourceDetailContentInner({
                               {insight.insight_type}
                             </Badge>
                           </div>
+                          {/* LOCAL: whether this insight has a vector, same mark as the
+                              source's own on the Details tab. Shown only when the list
+                              endpoint said so; never a guess. */}
+                          {typeof insight.embedded === 'boolean' && (
+                            <div className="flex items-center gap-2">
+                              <Database className="h-3.5 w-3.5 text-muted-foreground" />
+                              <Badge variant={insight.embedded ? "default" : "secondary"} className="text-xs">
+                                {insight.embedded ? t('sources.embedded') : t('sources.notEmbedded')}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
                           {insight.content.slice(0, 180)}{insight.content.length > 180 ? '…' : ''}

@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react' // LOCAL: fireEvent, within
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SourceDetailContent } from './SourceDetailContent'
 import { sourcesApi } from '@/lib/api/sources'
+import { insightsApi } from '@/lib/api/insights' // LOCAL
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { SourceDetailResponse } from '@/lib/types/api'
 
@@ -141,5 +142,83 @@ describe('SourceDetailContent', () => {
     })
     screen.getByText('common.close').click()
     expect(onClose).toHaveBeenCalled()
+  })
+})
+
+// LOCAL: each insight on the Insights tab shows whether it has a vector
+// (embedded / not embedded), from the `embedded` field the list endpoint
+// returns. Nothing else on the tab changes.
+describe('SourceDetailContent insights tab, embedded mark (LOCAL)', () => {
+  const source: SourceDetailResponse = {
+    id: 'source:s',
+    title: 'A paper',
+    asset: null,
+    embedded: true,
+    embedded_chunks: 12,
+    insights_count: 2,
+    created: '2026-01-01T00:00:00Z',
+    updated: '2026-01-01T00:00:00Z',
+    full_text: 'the text',
+  }
+
+  const insight = (id: string, content: string, embedded: boolean) => ({
+    id,
+    source_id: 'source:s',
+    insight_type: 'Paper Analysis',
+    content,
+    created: null,
+    updated: null,
+    embedded,
+  })
+
+  function renderSource() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <SourceDetailContent sourceId="source:s" />
+      </QueryClientProvider>
+    )
+  }
+
+  async function openInsightsTab() {
+    const tab = await screen.findByRole('tab', { name: /common\.insights/ })
+    // Radix activates a tab on mouse down (left button), not on click.
+    fireEvent.mouseDown(tab)
+  }
+
+  const cardWith = (content: string) => screen.getByText(content).parentElement as HTMLElement
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSourcesGet.mockResolvedValue(source)
+  })
+
+  it('marks an insight with a vector as embedded and one without as not embedded', async () => {
+    vi.mocked(insightsApi.listForSource).mockResolvedValue([
+      insight('source_insight:with_vector', 'one', true),
+      insight('source_insight:without_vector', 'two', false),
+    ])
+
+    renderSource()
+    await openInsightsTab()
+    await waitFor(() => expect(screen.getByText('two')).toBeInTheDocument())
+
+    expect(within(cardWith('one')).getByText('sources.embedded')).toBeInTheDocument()
+    expect(within(cardWith('one')).queryByText('sources.notEmbedded')).not.toBeInTheDocument()
+    expect(within(cardWith('two')).getByText('sources.notEmbedded')).toBeInTheDocument()
+    expect(within(cardWith('two')).queryByText('sources.embedded')).not.toBeInTheDocument()
+  })
+
+  it('shows no mark when the list does not say', async () => {
+    vi.mocked(insightsApi.listForSource).mockResolvedValue([
+      { ...insight('source_insight:unknown', 'three', true), embedded: undefined },
+    ])
+
+    renderSource()
+    await openInsightsTab()
+    await waitFor(() => expect(screen.getByText('three')).toBeInTheDocument())
+
+    expect(screen.queryByText('sources.embedded')).not.toBeInTheDocument()
+    expect(screen.queryByText('sources.notEmbedded')).not.toBeInTheDocument()
   })
 })

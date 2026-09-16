@@ -8,6 +8,9 @@ export interface SourceInsightResponse {
   // Insights created before backend migration 19 have no timestamps
   created: string | null
   updated: string | null
+  // LOCAL: whether the insight has a vector. Set by GET /sources/{id}/insights;
+  // GET /insights/{id} does not compute it (null / absent = not known).
+  embedded?: boolean | null
 }
 
 export interface CreateSourceInsightRequest {

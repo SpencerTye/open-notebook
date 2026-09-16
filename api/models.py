@@ -403,6 +403,9 @@ class SourceInsightResponse(BaseModel):
     # and the API must return null for them (never the string "None").
     created: Optional[str] = None
     updated: Optional[str] = None
+    # LOCAL: whether the insight has a vector. Set by GET /sources/{id}/insights;
+    # null where an endpoint does not compute it (GET /insights/{id}).
+    embedded: Optional[bool] = None
 
 
 class InsightCreationResponse(BaseModel):
