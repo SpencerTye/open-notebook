@@ -14,7 +14,7 @@ export interface EmbedContentResponse {
 }
 
 export interface RebuildEmbeddingsRequest {
-  mode: 'existing' | 'all'
+  mode: 'existing' | 'all' | 'missing' // LOCAL: missing = no vector yet
   include_sources?: boolean
   include_notes?: boolean
   include_insights?: boolean

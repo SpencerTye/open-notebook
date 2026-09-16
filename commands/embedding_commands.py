@@ -170,7 +170,7 @@ async def _embed_markdown_record(
 
 
 class RebuildEmbeddingsInput(CommandInput):
-    mode: Literal["existing", "all"]
+    mode: Literal["existing", "all", "missing"]  # LOCAL: missing = no vector yet
     include_sources: bool = True
     include_notes: bool = True
     include_insights: bool = True
@@ -575,6 +575,13 @@ async def collect_items_for_rebuild(
                 items["sources"] = [str(item) for item in result]
             else:
                 items["sources"] = []
+        elif mode == "missing":
+            # LOCAL: sources with text but not a single chunk vector yet
+            result = await repo_query(
+                "SELECT id FROM source WHERE full_text != none AND string::trim(full_text) != '' "
+                "AND (SELECT VALUE id FROM source_embedding WHERE source = $parent.id LIMIT 1) = []"
+            )
+            items["sources"] = [str(item["id"]) for item in result] if result else []
         else:  # mode == "all"
             # Query all sources with non-empty content
             result = await repo_query(
@@ -590,6 +597,12 @@ async def collect_items_for_rebuild(
             result = await repo_query(
                 "SELECT id FROM note WHERE embedding != none AND array::len(embedding) > 0"
             )
+        elif mode == "missing":
+            # LOCAL: notes with content and no vector
+            result = await repo_query(
+                "SELECT id FROM note WHERE content != none AND string::trim(content) != '' "
+                "AND (embedding = none OR array::len(embedding) = 0)"
+            )
         else:  # mode == "all"
             # Query all notes with non-empty content
             result = await repo_query(
@@ -604,6 +617,13 @@ async def collect_items_for_rebuild(
             # Query insights with embeddings
             result = await repo_query(
                 "SELECT id FROM source_insight WHERE embedding != none AND array::len(embedding) > 0"
+            )
+        elif mode == "missing":
+            # LOCAL: insights with content and no vector; the normal state in
+            # this build, where an insight is not embedded when it is created.
+            result = await repo_query(
+                "SELECT id FROM source_insight WHERE content != none AND string::trim(content) != '' "
+                "AND (embedding = none OR array::len(embedding) = 0)"
             )
         else:  # mode == "all"
             # Query all insights with non-empty content

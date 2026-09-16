@@ -22,7 +22,8 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 
 export function RebuildEmbeddings() {
   const { t } = useTranslation()
-  const [mode, setMode] = useState<'existing' | 'all'>('existing')
+  // LOCAL: third mode, "missing" = only records without a vector yet.
+  const [mode, setMode] = useState<'existing' | 'all' | 'missing'>('existing')
   const [includeSources, setIncludeSources] = useState(true)
   const [includeNotes, setIncludeNotes] = useState(true)
   const [includeInsights, setIncludeInsights] = useState(true)
@@ -135,19 +136,23 @@ export function RebuildEmbeddings() {
           <div className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="mode">{t('advanced.rebuild.mode')}</Label>
-              <Select value={mode} onValueChange={(value) => setMode(value as 'existing' | 'all')}>
+              <Select value={mode} onValueChange={(value) => setMode(value as 'existing' | 'all' | 'missing')}>
                 <SelectTrigger id="mode">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="existing">{t('advanced.rebuild.existing')}</SelectItem>
                   <SelectItem value="all">{t('advanced.rebuild.all')}</SelectItem>
+                  {/* LOCAL: English only, like the other overlay strings (see custom/README.md). */}
+                  <SelectItem value="missing">Missing</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
                 {mode === 'existing'
                   ? t('advanced.rebuild.existingDesc')
-                  : t('advanced.rebuild.allDesc')}
+                  : mode === 'missing'
+                    ? 'Embed only items that have no embedding yet; everything already embedded is skipped'
+                    : t('advanced.rebuild.allDesc')}
               </p>
             </div>
 

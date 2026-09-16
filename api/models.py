@@ -233,9 +233,10 @@ class EmbedResponse(BaseModel):
 
 # Rebuild request/response models
 class RebuildRequest(BaseModel):
-    mode: Literal["existing", "all"] = Field(
+    # LOCAL: "missing" = only records that have no vector yet.
+    mode: Literal["existing", "all", "missing"] = Field(
         ...,
-        description="Rebuild mode: 'existing' only re-embeds items with embeddings, 'all' embeds everything",
+        description="Rebuild mode: 'existing' only re-embeds items with embeddings, 'all' embeds everything, 'missing' embeds only items without embeddings",
     )
     include_sources: bool = Field(True, description="Include sources in rebuild")
     include_notes: bool = Field(True, description="Include notes in rebuild")
