@@ -24,6 +24,8 @@ import type { SourceBulkAction } from '@/lib/utils/source-context'
 import { CollapsibleColumn, createCollapseButton } from '@/components/notebooks/CollapsibleColumn'
 import { useNotebookColumnsStore } from '@/lib/stores/notebook-columns-store'
 import { useTranslation } from '@/lib/hooks/use-translation'
+// LOCAL: notebook-wide transformations (custom/overlay/frontend/.../BatchTransformPanel.tsx)
+import { BatchTransformPanel } from '@/components/notebooks/BatchTransformPanel'
 
 interface SourcesColumnProps {
   sources?: SourceListResponse[]
@@ -205,6 +207,12 @@ export function SourcesColumn({
               </div>
             </div>
           </CardHeader>
+
+          {/* LOCAL: run one transformation across every source that lacks it.
+              Outside CardContent so it stays put while the list scrolls. */}
+          <div className="flex-shrink-0 px-6">
+            <BatchTransformPanel notebookId={notebookId} />
+          </div>
 
           <CardContent ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (

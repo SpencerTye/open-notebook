@@ -24,6 +24,7 @@ from api.auth import PasswordAuthMiddleware
 from api.middleware import MaxBodySizeMiddleware, get_max_upload_size_bytes
 from api.routers import (
     auth,
+    batch_transformations,  # LOCAL: notebook-wide transformations
     capabilities,
     chat,
     config,
@@ -406,6 +407,9 @@ app.include_router(providers.router, prefix="/api", tags=["providers"])
 app.include_router(capabilities.router, prefix="/api", tags=["capabilities"])
 app.include_router(languages.router, prefix="/api", tags=["languages"])
 app.include_router(llm_control.router, prefix="/api", tags=["llm-control"])  # LOCAL
+app.include_router(  # LOCAL: notebook-wide transformations
+    batch_transformations.router, prefix="/api", tags=["batch-transformations"]
+)
 
 
 @app.get("/")
