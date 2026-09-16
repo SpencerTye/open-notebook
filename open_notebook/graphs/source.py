@@ -1,3 +1,6 @@
+# LOCAL: full copy of upstream open_notebook/graphs/source.py at v1.14.0 with one
+# change in save_source, marked LOCAL: null characters are stripped from the
+# extracted text and title before the record is saved. See custom/README.md.
 import operator
 import os
 from typing import Any, Dict, List, Optional
@@ -16,6 +19,7 @@ from open_notebook.domain.notebook import Asset, Source
 from open_notebook.domain.transformation import Transformation
 from open_notebook.graphs.transformation import graph as transform_graph
 from open_notebook.utils.runtime_capabilities import engine_runtime_missing
+from open_notebook.utils.text_sanitize import strip_null_bytes  # LOCAL
 
 # Preferred languages for YouTube transcript selection. content-core's own
 # default is only ["en", "es", "pt"]; we keep the broader list Open Notebook has
@@ -207,11 +211,14 @@ async def save_source(state: SourceState) -> dict:
     source.asset = Asset(
         url=content_state.get("url"), file_path=content_state.get("file_path")
     )
-    source.full_text = extraction.content
+    # LOCAL: SurrealDB rejects strings containing the null character (code 0),
+    # which PDF extraction emits for glyphs with no character mapping. Strip it
+    # before saving (open_notebook/utils/text_sanitize.py); nothing else changes.
+    source.full_text = strip_null_bytes(extraction.content)
 
     # Preserve user-set title; only overwrite placeholder or empty titles
     if extraction.title and (not source.title or source.title == "Processing..."):
-        source.title = extraction.title
+        source.title = strip_null_bytes(extraction.title)  # LOCAL
 
     await source.save()
 
