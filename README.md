@@ -1,3 +1,64 @@
+# About this fork
+
+This is [Open Notebook](https://github.com/lfnovo/open-notebook) v1.14.0 with
+changes I made to run it on one Windows PC with a 24 GB GPU and local models
+served by llama.cpp. I use it to search and question the papers behind my
+dissertation without sending unpublished work to a cloud service. Everything
+below the line is Open Notebook's own README.
+
+## Changes
+
+- **Faster vector search.** Search and Ask use an in-process
+  [TurboVec](https://pypi.org/project/turbovec/) index instead of SurrealDB's
+  full cosine scan, which took about 15 seconds per search on my library of
+  7,448 chunks. The index finds the 50 nearest candidates in about 2 ms; those
+  are re-ranked with their exact vectors from the database, so results are
+  ranked the same way as before. `OPEN_NOTEBOOK_VECTOR_ENGINE=scan` switches
+  back.
+  (`open_notebook/vector_index/`, `api/routers/vector_index.py`)
+- **Model-memory toggle.** A sidebar panel with one switch per model on the
+  llama.cpp server, to load or unload it from GPU memory, and a readout of
+  GPU memory in use. (`api/routers/llm_control.py`,
+  `frontend/src/components/common/LlmControl.tsx`)
+- **Batch transformations.** Run a transformation on every source in a
+  notebook that does not have its result yet, in one click instead of one
+  click per source. (`api/routers/batch_transformations.py`,
+  `frontend/src/components/notebooks/BatchTransformPanel.tsx`)
+- **Insights are embedded on demand.** Upstream queues an embedding job as
+  soon as an insight is saved. With one model loaded at a time, that job fails
+  against the unloaded embedder and blocks the single worker. Rebuild
+  Embeddings gains a "Missing" mode that embeds only records without a
+  vector, and each insight now shows whether it is embedded.
+  (`commands/embedding_commands.py`, `open_notebook/domain/notebook.py`)
+- **Inbox folder.** Files dropped into `inbox/<notebook name>/` are uploaded
+  to that notebook. (`scripts/inbox_watcher.py`)
+- **Null characters removed from extracted text.** Some PDFs produce the null
+  character, which SurrealDB refuses to store, leaving a record that could not
+  be read or deleted. (`open_notebook/utils/text_sanitize.py`)
+- **CSV and TSV files** can be picked in the upload dialog.
+
+Lines changed inside Open Notebook's own files are marked `LOCAL`. To see
+every change: `git diff v1.14.0`.
+
+## Windows setup
+
+`windows/` holds the scripts that run this on my PC: a tray icon and one-click
+start/stop for Docker, the llama.cpp server and the app (`notebook-control/`),
+llama.cpp model presets (`llama-server/`), and the Docker Compose file and
+Dockerfile that build the image (`open-notebook/`). The start/stop module
+identifies its own llama.cpp server by process ID and start time, never by
+program name, so other llama.cpp servers on the same PC are left alone.
+
+## Tests
+
+```
+python -m pytest local_tests -q                  # 115 tests for the backend changes
+Invoke-Pester -Path windows
+otebook-control	ests  # 62 tests for start/stop logic (Pester 3.4)
+```
+
+---
+
 <a id="readme-top"></a>
 
 <!-- [![Contributors][contributors-shield]][contributors-url] -->

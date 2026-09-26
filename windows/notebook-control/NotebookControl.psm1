@@ -9,7 +9,7 @@
 #   - llama-server\start-llama-server.ps1, stop-llama-server.ps1
 #
 # The one rule this module exists to enforce: the notebook's model server is
-# identified by WHICH PROCESS IT IS (process id + start time recorded at
+# identified by which process it is (process id + start time recorded at
 # launch, or failing that a command line naming OUR models.ini as a whole
 # token and port 8080), never by the program name "llama-server.exe". Other
 # llama.cpp servers may run on the same PC; those must never be touched. Helper
