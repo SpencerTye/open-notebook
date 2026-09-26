@@ -24,7 +24,7 @@ import type { SourceBulkAction } from '@/lib/utils/source-context'
 import { CollapsibleColumn, createCollapseButton } from '@/components/notebooks/CollapsibleColumn'
 import { useNotebookColumnsStore } from '@/lib/stores/notebook-columns-store'
 import { useTranslation } from '@/lib/hooks/use-translation'
-// LOCAL: notebook-wide transformations (custom/overlay/frontend/.../BatchTransformPanel.tsx)
+// LOCAL: notebook-wide transformations (components/notebooks/BatchTransformPanel.tsx)
 import { BatchTransformPanel } from '@/components/notebooks/BatchTransformPanel'
 
 interface SourcesColumnProps {

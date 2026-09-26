@@ -38,7 +38,7 @@ loaded the jobs fail with the model server's "model is not loaded" error.
 Database access and job submission go through the two module-level helpers
 ``_query`` and ``_submit``, which import their dependencies lazily, so this module
 imports cleanly outside the container and the tests can substitute them:
-see ``custom/tests/test_batch_transformations.py``.
+see ``local_tests/test_batch_transformations.py``.
 """
 
 from __future__ import annotations

@@ -6,7 +6,7 @@ a notebook that does not already carry that transformation's insight.
 The module reaches the database and the job queue only through ``_query``,
 ``_submit`` and ``_record_id``, which import their dependencies lazily. The
 tests load the real module and replace those three, so the endpoint functions
-themselves run unmodified on the host — no container, no database, and nothing
+themselves run unmodified on the host: no container, no database, and nothing
 is ever queued for real.
 """
 

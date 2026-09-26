@@ -19,8 +19,8 @@ API exactly like the "Add Source" dialog does (extraction and embedding run in
 the background worker), and then moved to ``_done``. A folder whose name does
 not match an existing notebook gets a new notebook of that name.
 
-Run inside the container by supervisord (see custom/overlay/supervisord.conf).
-Unit tests: custom/tests/test_inbox_watcher.py.
+Run inside the container by supervisord (see supervisord.conf).
+Unit tests: local_tests/test_inbox_watcher.py.
 
 Environment:
     OPEN_NOTEBOOK_INBOX_DIR           default /app/inbox
@@ -169,7 +169,7 @@ class Watcher:
         return [nb for nb in self.api.list_notebooks() if not nb.get("archived")]
 
     def sync_folders(self) -> None:
-        """Create one drop folder per notebook so the operator never types a name."""
+        """Create one drop folder per notebook so no one has to type a name."""
         for notebook in self._active_notebooks():
             folder = sanitize_name(notebook.get("name") or "")
             if folder:

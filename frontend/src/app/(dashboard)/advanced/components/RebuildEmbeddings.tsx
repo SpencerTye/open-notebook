@@ -143,7 +143,7 @@ export function RebuildEmbeddings() {
                 <SelectContent>
                   <SelectItem value="existing">{t('advanced.rebuild.existing')}</SelectItem>
                   <SelectItem value="all">{t('advanced.rebuild.all')}</SelectItem>
-                  {/* LOCAL: English only, like the other overlay strings (see custom/README.md). */}
+                  {/* LOCAL: English only, like the other strings this fork adds. */}
                   <SelectItem value="missing">Missing</SelectItem>
                 </SelectContent>
               </Select>

@@ -2,7 +2,7 @@
 
 This file differs from Open Notebook v1.14.0 in one place, marked LOCAL:
 after an insight is written, no embed_insight job is queued. Insights are
-embedded only when the operator runs Manage -> Advanced -> Rebuild Embeddings
+embedded only when the user runs Manage -> Advanced -> Rebuild Embeddings
 with the embedder loaded.
 
 The module imports the app's database, model and job-queue layers. The tests

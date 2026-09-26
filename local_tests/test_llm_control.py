@@ -2,7 +2,7 @@
 
 The router is loaded straight from its file so these tests need only FastAPI,
 httpx and pydantic, not the whole Open Notebook backend. Run from the
-workspace root with a venv that has pytest:
+repository root with a venv that has pytest:
 
     python -m pytest local_tests -q
 """

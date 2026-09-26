@@ -1,6 +1,6 @@
 // LOCAL addition (not upstream): client for the notebook-wide transformation
 // endpoints. Upstream can only run a transformation on one source at a time.
-// Backend: custom/overlay/api/routers/batch_transformations.py
+// Backend: api/routers/batch_transformations.py
 import apiClient from './client'
 
 export interface BatchTransformationCounts {

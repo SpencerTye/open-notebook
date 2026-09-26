@@ -12,7 +12,7 @@ llama.cpp ``tools/server/README.md`` under "Router mode":
 - ``POST /models/unload``   ``{"model": "<id>"}``
 
 GPU memory comes from ``nvidia-smi`` when the container has the GPU (it does
-in this workspace: see the ``deploy`` block in docker-compose.yml).
+in the Windows setup: see the ``deploy`` block in windows/open-notebook/docker-compose.yml).
 
 Endpoints (all under ``/api``):
 
@@ -21,7 +21,7 @@ Endpoints (all under ``/api``):
 - ``POST /llm/unload``  ``{"model": id}``
 
 Kept self-contained (no ``open_notebook`` imports) so it can be unit-tested
-outside the container: see ``custom/tests/test_llm_control.py``.
+outside the container: see ``local_tests/test_llm_control.py``.
 
 Configuration: ``LLAMA_SERVER_URL`` (default ``http://host.docker.internal:8080``).
 """

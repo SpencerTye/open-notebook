@@ -461,8 +461,8 @@ async def create_insight_command(
     2. Return the insight_id
 
     LOCAL: upstream also queued an embed_insight job here (fire-and-forget).
-    In this build nothing is queued after the insight is written: the operator
-    keeps one model loaded at a time, so that job would only fail against an
+    In this build nothing is queued after the insight is written: only one
+    model is loaded at a time, so that job would only fail against an
     unloaded embedder and occupy the single worker slot while retrying.
     Insights are embedded on demand through Manage -> Advanced -> Rebuild
     Embeddings (mode "All", Insights ticked) once the embedder is loaded.

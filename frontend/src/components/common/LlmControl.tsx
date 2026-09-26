@@ -11,7 +11,7 @@
 // windows. The title line carries the GPU figure (label on hover) and each
 // model is one line (id on hover).
 //
-// English only on purpose: this build serves one operator, so the upstream
+// English only on purpose: this build has a single user, so the upstream
 // rule "every string in all 14 locales" is not applied here.
 
 import { MemoryStick } from 'lucide-react'

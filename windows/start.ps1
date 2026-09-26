@@ -7,7 +7,7 @@
 # The same thing the tray icon's "Start notebook" does; the logic lives in
 # notebook-control\NotebookControl.psm1.
 #
-# Run from anywhere:  powershell -ExecutionPolicy Bypass -File "S:\RAG Notebooks\start.ps1"
+# Run:  powershell -ExecutionPolicy Bypass -File windows\start.ps1
 
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'notebook-control\NotebookControl.psm1') -Force

@@ -1,5 +1,5 @@
 # Pester 3.4 tests for the pure decision logic in NotebookControl.psm1.
-# Run:  Invoke-Pester -Path "S:\RAG Notebooks\notebook-control\tests"
+# Run:  Invoke-Pester -Path windows\notebook-control\tests
 #
 # Everything here works on plain objects (process snapshots, port tables,
 # JSON payloads) so no process is started, stopped or queried by these tests.
@@ -9,8 +9,8 @@ Import-Module $modulePath -Force
 
 # ---- fixtures -------------------------------------------------------------
 
-$iniPath = 'S:\RAG Notebooks\llama-server\models.ini'
-$exe     = 'S:\RAG Notebooks\llama-server\bin\llama-server.exe'
+$iniPath = 'C:\Open Notebook\llama-server\models.ini'
+$exe     = 'C:\Open Notebook\llama-server\bin\llama-server.exe'
 $t0      = Get-Date '2026-09-14 19:27:52'
 
 function New-Proc([int]$ProcessId, [int]$ParentProcessId, [string]$Name, [string]$CommandLine, [datetime]$CreationDate) {
@@ -24,9 +24,9 @@ function New-Proc([int]$ProcessId, [int]$ParentProcessId, [string]$Name, [string
 }
 
 $router = New-Proc 10480 13920 'llama-server.exe' "`"$exe`" --models-preset `"$iniPath`" --host 0.0.0.0 --port 8080 --models-max 2 --no-models-autoload" $t0
-$helperEmbed = New-Proc 33336 10480 'llama-server.exe' "`"$exe`" --embeddings --host 127.0.0.1 --pooling last --port 52248 --alias qwen3-embedding-4b --model `"S:/RAG Notebooks/llama-server/models/Qwen3-Embedding-4B-Q8_0.gguf`" --n-gpu-layers 999" $t0.AddSeconds(102)
-$helperChat  = New-Proc 30976 10480 'llama-server.exe' "`"$exe`" --host 127.0.0.1 --port 58892 --alias gemma-4-26b-a4b --model `"S:/RAG Notebooks/llama-server/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`" --n-gpu-layers 999" $t0.AddHours(4)
-# Another llama.cpp router the operator runs for something else: same program name, different preset file.
+$helperEmbed = New-Proc 33336 10480 'llama-server.exe' "`"$exe`" --embeddings --host 127.0.0.1 --pooling last --port 52248 --alias qwen3-embedding-4b --model `"C:/Open Notebook/llama-server/models/Qwen3-Embedding-4B-Q8_0.gguf`" --n-gpu-layers 999" $t0.AddSeconds(102)
+$helperChat  = New-Proc 30976 10480 'llama-server.exe' "`"$exe`" --host 127.0.0.1 --port 58892 --alias gemma-4-26b-a4b --model `"C:/Open Notebook/llama-server/models/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf`" --n-gpu-layers 999" $t0.AddHours(4)
+# Another llama.cpp router running for something else: same program name, different preset file.
 $foreignRouter = New-Proc 4444 1 'llama-server.exe' "`"F:\LLM\llama.cpp\llama-server.exe`" --models-preset `"F:\LLM\other.ini`" --port 8090" $t0.AddMinutes(5)
 $foreignHelper = New-Proc 4445 4444 'llama-server.exe' "`"F:\LLM\llama.cpp\llama-server.exe`" --alias other-model --model `"F:\LLM\models\other.gguf`" --port 50000" $t0.AddMinutes(6)
 # A single-model llama-server (no router), also not ours.
@@ -55,7 +55,7 @@ Describe 'Find-NotebookRouter' {
         }
 
         It 'matches the ini path regardless of slash direction and letter case' {
-            $found = @(Find-NotebookRouter -Processes $allProcs -ModelsIniPath 's:/rag notebooks/llama-server/MODELS.INI')
+            $found = @(Find-NotebookRouter -Processes $allProcs -ModelsIniPath 'c:/open notebook/llama-server/MODELS.INI')
             $found.Count | Should Be 1
             $found[0].ProcessId | Should Be 10480
         }
@@ -306,7 +306,7 @@ Describe 'Resolve-StopPlan' {
 
     It 'reports, but never ends, helpers left over from a recorded router that has died' {
         # The record names router 10480, which is gone; its helper 30976 is still
-        # there holding GPU memory. It is reported so the operator knows, but the
+        # there holding GPU memory. It is reported so the user knows, but the
         # dead parent's id cannot be re-verified, so nothing is ended.
         $record = New-ServerRecord -Process $router -Port 8080
         $plan = Resolve-StopPlan -Processes @($helperChat, $foreignRouter, $foreignHelper) -ModelsIniPath $iniPath -Record $record -Connections @() -Port 8080
@@ -401,10 +401,10 @@ Describe 'ConvertTo-CommandLineArgument' {
         ConvertTo-CommandLineArgument -Value 'stop' | Should Be 'stop'
     }
     It 'quotes a value with spaces' {
-        ConvertTo-CommandLineArgument -Value 'S:\RAG Notebooks\x.ps1' | Should Be '"S:\RAG Notebooks\x.ps1"'
+        ConvertTo-CommandLineArgument -Value 'C:\Open Notebook\x.ps1' | Should Be '"C:\Open Notebook\x.ps1"'
     }
     It 'doubles a trailing backslash inside quotes so the closing quote survives' {
-        ConvertTo-CommandLineArgument -Value 'S:\RAG Notebooks\' | Should Be '"S:\RAG Notebooks\\"'
+        ConvertTo-CommandLineArgument -Value 'C:\Open Notebook\' | Should Be '"C:\Open Notebook\\"'
     }
     It 'escapes an embedded quote' {
         ConvertTo-CommandLineArgument -Value 'say "hi"' | Should Be '"say \"hi\""'
@@ -415,10 +415,10 @@ Describe 'New-ActionArgumentList' {
     $actionScript = Join-Path $PSScriptRoot '..\action.ps1'
 
     It 'quotes the script path, which contains a space, so powershell.exe receives it whole' {
-        $list = @(New-ActionArgumentList -ScriptPath 'S:\RAG Notebooks\notebook-control\action.ps1' -Action 'stop')
+        $list = @(New-ActionArgumentList -ScriptPath 'C:\Open Notebook\notebook-control\action.ps1' -Action 'stop')
         $i = [array]::IndexOf($list, '-File')
         $i | Should Not Be -1
-        $list[$i + 1] | Should Be '"S:\RAG Notebooks\notebook-control\action.ps1"'
+        $list[$i + 1] | Should Be '"C:\Open Notebook\notebook-control\action.ps1"'
         ($list -contains '-Action') | Should Be $true
         $list[[array]::IndexOf($list, '-Action') + 1] | Should Be 'stop'
         ($list -contains '-OpenBrowser') | Should Be $false
@@ -460,7 +460,7 @@ Describe 'New-LlamaServerArgumentList' {
         $list[[array]::IndexOf($list, '--models-max') + 1] | Should Be '2'
     }
 
-    It 'turns autoload off: no model loads unless the operator asks for it (instruction of 2026-09-15)' {
+    It 'turns autoload off: no model loads unless the user asks for it' {
         ($list -contains '--no-models-autoload') | Should Be $true
         ($list -contains '--models-autoload') | Should Be $false
     }

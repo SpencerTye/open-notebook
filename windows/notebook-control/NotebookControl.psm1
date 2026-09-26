@@ -5,14 +5,14 @@
 # port 8080) and the two compose containers. Used by:
 #   - notebook-control\tray.ps1          the tray icon (Start / Stop / status)
 #   - notebook-control\action.ps1        one start/stop/load/unload run, launched by the tray
-#   - start.ps1, stop.ps1                the terminal entry points at the workspace root
+#   - start.ps1, stop.ps1                the terminal entry points in windows\
 #   - llama-server\start-llama-server.ps1, stop-llama-server.ps1
 #
 # The one rule this module exists to enforce: the notebook's model server is
 # identified by WHICH PROCESS IT IS (process id + start time recorded at
 # launch, or failing that a command line naming OUR models.ini as a whole
-# token and port 8080), never by the program name "llama-server.exe". The
-# operator runs other llama.cpp servers; those must never be touched. Helper
+# token and port 8080), never by the program name "llama-server.exe". Other
+# llama.cpp servers may run on the same PC; those must never be touched. Helper
 # processes count only if their parent is our router AND they are younger than
 # it (Windows reuses ids and never rewrites a child's parent id). Unload
 # requests go to port 8080 only after checking that the process listening
@@ -355,7 +355,7 @@ function New-ActionArgumentList {
 }
 
 function Resolve-ActionOutcome {
-    # What to tell the operator when an action process has exited. The result
+    # What to tell the user when an action process has exited. The result
     # file counts only if this action wrote it (StartedAt not before the launch);
     # otherwise the process died before writing and we say so, with its exit code.
     param([Parameter(Mandatory)][string]$LastActionPath, [Parameter(Mandatory)][datetime]$LaunchedAt, [int]$ExitCode = -1)
@@ -785,8 +785,8 @@ function New-LlamaServerArgumentList {
     # --no-models-autoload: the server loads a model only when asked to through
     # its /models/load call (the tray, the Model memory panel) or through the
     # load-on-startup lines in models.ini. A chat or embedding request naming a
-    # model that is not loaded fails instead of loading it. Operator instruction
-    # of 2026-09-15: nothing may load a model without the operator's action.
+    # model that is not loaded fails instead of loading it. By design, nothing
+    # loads a model unless the user asks.
     return @(
         '--models-preset', (ConvertTo-CommandLineArgument $script:ModelsIni),
         '--host', '0.0.0.0',

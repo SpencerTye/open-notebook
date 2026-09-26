@@ -1,6 +1,6 @@
 // LOCAL addition (not upstream): client for the /api/llm/* endpoints that
 // show and change which models the llama.cpp server holds in GPU memory.
-// Backend: custom/overlay/api/routers/llm_control.py
+// Backend: api/routers/llm_control.py
 import apiClient from './client'
 
 export interface LlmModelState {

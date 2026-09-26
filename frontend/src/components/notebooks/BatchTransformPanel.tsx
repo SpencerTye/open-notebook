@@ -13,7 +13,7 @@
 // extraction command and nothing else — so the count falling is the only signal
 // the app can give. It refreshes on its own every 15 seconds.
 //
-// English only on purpose: this build serves one operator, so the upstream rule
+// English only on purpose: this build has a single user, so the upstream rule
 // "every string in all 14 locales" is not applied here.
 
 import { useEffect, useMemo, useState } from 'react'

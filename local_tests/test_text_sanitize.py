@@ -10,7 +10,7 @@ Two things are covered here:
 
 1. ``open_notebook/utils/text_sanitize.py`` (new): ``strip_null_bytes`` removes
    only that character and leaves everything else exactly as it was.
-2. ``open_notebook/graphs/source.py`` (full copy, LOCAL change in
+2. ``open_notebook/graphs/source.py`` (LOCAL change in
    ``save_source``): the extracted content and title go through
    ``strip_null_bytes`` before the record is saved. That module imports the
    whole app, so the wiring is checked by parsing the file, not importing it.

@@ -9,7 +9,7 @@
 # "queue empty" on that line means every job has finished (or failed; failed
 # jobs show in the container log). Ctrl+C stops the script.
 #
-# Run:  powershell -ExecutionPolicy Bypass -File "S:\RAG Notebooks\open-notebook\custom\queue.ps1"
+# Run:  powershell -ExecutionPolicy Bypass -File windows\open-notebook\queue.ps1
 #       add -Once for a single line, -Every 2 to poll every 2 seconds.
 
 param([int]$Every = 5, [switch]$Once)

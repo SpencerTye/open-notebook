@@ -1,6 +1,5 @@
-# LOCAL: full copy of upstream open_notebook/graphs/source.py at v1.14.0 with one
-# change in save_source, marked LOCAL: null characters are stripped from the
-# extracted text and title before the record is saved. See custom/README.md.
+# LOCAL: one change in save_source, marked LOCAL: null characters are stripped
+# from the extracted text and title before the record is saved.
 import operator
 import os
 from typing import Any, Dict, List, Optional

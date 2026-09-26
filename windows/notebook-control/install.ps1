@@ -5,7 +5,7 @@
 #   - starts the tray icon now (unless -NoStart)
 # Safe to run again; it just rewrites the shortcuts.
 #
-# Run:  powershell -ExecutionPolicy Bypass -File "S:\RAG Notebooks\notebook-control\install.ps1"
+# Run:  powershell -ExecutionPolicy Bypass -File windows\notebook-control\install.ps1
 
 param([switch]$NoStart, [switch]$NoLogon)
 
