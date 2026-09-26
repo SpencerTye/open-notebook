@@ -1,0 +1,112 @@
+# Open Notebook stack for the Windows setup.
+#
+# Based on the repository's docker-compose.yml (fetched 2026-09-14). Changes
+# from it are marked "LOCAL:".
+#
+# Start:  docker compose up -d        (run from this folder)
+# Stop:   docker compose down
+# Logs:   docker compose logs -f open_notebook
+#
+# Persistent state lives in two bind-mounted folders next to this file
+# (both git-ignored): ./surreal_data (database) and ./notebook_data (uploads,
+# caches). Secrets live in ./.env (git-ignored); see .env.example.
+
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2
+    # Credentials default to root:root for a zero-config local setup. Before
+    # exposing this instance to a network, set SURREAL_USER / SURREAL_PASSWORD
+    # in a .env file (see .env.example). They are applied here and to the
+    # open_notebook service below, so the two always stay in sync.
+    # List (exec) form so each interpolated value stays a single argument;
+    # a password containing spaces would otherwise be split into several.
+    command: ["start", "--log", "info", "--user", "${SURREAL_USER:-root}", "--pass", "${SURREAL_PASSWORD:-root}", "rocksdb:/mydata/mydatabase.db"]
+    user: root  # Required for bind mounts on Linux
+    ports:
+      # Bound to localhost only: the open_notebook service reaches this over
+      # the internal compose network regardless, so the host port is purely
+      # for local debugging (e.g. Surrealist, `surreal sql`). Exposing this
+      # on 0.0.0.0 would let anyone who can reach the host connect with the
+      # default root:root credentials.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./surreal_data:/mydata
+    environment:
+      - SURREAL_EXPERIMENTAL_GRAPHQL=true
+    restart: always
+    pull_policy: always
+
+  open_notebook:
+    # LOCAL: the official 1.14.0 image with this fork's changes swapped in
+    # (see Dockerfile in this folder). Rebuild with build.ps1 after changing
+    # the source. No pull_policy: the image is built here, never pulled.
+    image: open-notebook-custom:1.14.0
+    build:
+      context: ../..
+      dockerfile: windows/open-notebook/Dockerfile
+    ports:
+      - "8502:8502"  # Web UI
+      - "5055:5055"  # REST API
+    environment:
+      # REQUIRED. Encrypts the model credentials stored in the database.
+      # LOCAL: read from ./.env instead of being written here, so the key is
+      # never committed to git. Compose refuses to start if it is missing.
+      # Never change it after first use: stored credentials become unreadable.
+      - OPEN_NOTEBOOK_ENCRYPTION_KEY=${OPEN_NOTEBOOK_ENCRYPTION_KEY:?set OPEN_NOTEBOOK_ENCRYPTION_KEY in windows/open-notebook/.env}
+      # Database connection. SURREAL_USER / SURREAL_PASSWORD default to root:root
+      # for local use; override them in a .env file before exposing the instance
+      # (the same values configure the surrealdb service above).
+      - SURREAL_URL=ws://surrealdb:8000/rpc
+      - SURREAL_USER=${SURREAL_USER:-root}
+      - SURREAL_PASSWORD=${SURREAL_PASSWORD:-root}
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=open_notebook
+      # OPTIONAL: heavy extraction runtimes, installed on first startup when
+      # enabled (downloads are cached on the ./notebook_data volume, so only the
+      # first boot is slow). See docs/5-CONFIGURATION/environment-reference.md.
+      # LOCAL: Docling on. Docling is IBM's layout-aware PDF reader (columns,
+      # tables, reading order, OCR). The built-in "simple" reader dropped the
+      # spaces between words on an arXiv paper during setup testing, which
+      # ruins search and chat; Docling handles that correctly.
+      - OPEN_NOTEBOOK_ENABLE_DOCLING=true  # Docling engine + OCR + image sources (large ML stack)
+      # - OPEN_NOTEBOOK_ENABLE_CRAWL4AI=true  # local Crawl4AI (bundles a Chromium browser)
+      # - CRAWL4AI_API_URL=http://crawl4ai:11235  # use a remote Crawl4AI server instead (no local install)
+      # - CRAWL4AI_API_TOKEN=${CRAWL4AI_API_TOKEN}  # bearer token for that server (required by Crawl4AI >= 0.9.0)
+      # LOCAL: max concurrent background tasks (upstream default 5). The docs
+      # say to set 1 on single-GPU / local-LLM setups so parallel jobs do not
+      # overload the model server.
+      - OPEN_NOTEBOOK_WORKER_MAX_TASKS=1
+      # LOCAL: the llama.cpp router the sidebar's model-memory toggle talks to
+      # (same server the chat and embedding credentials point at).
+      - LLAMA_SERVER_URL=http://host.docker.internal:8080
+      # LOCAL: inbox drop folder (scripts/inbox_watcher.py).
+      - OPEN_NOTEBOOK_INBOX_DIR=/app/inbox
+      - OPEN_NOTEBOOK_INBOX_POLL_SECONDS=5
+      - OPEN_NOTEBOOK_INBOX_EMBED=true
+      # LOCAL: vector-search engine (open_notebook/vector_index/).
+      # turbovec = in-process TurboVec index with exact re-scoring from the
+      # database (milliseconds); scan = upstream's cosine scan inside SurrealDB
+      # (15 s per search on this library). The index is maintained either way,
+      # so flipping the switch needs no rebuild. Files live under
+      # ./notebook_data/vector_index on the host.
+      - OPEN_NOTEBOOK_VECTOR_ENGINE=turbovec
+      - OPEN_NOTEBOOK_VECTOR_INDEX_DIR=/app/data/vector_index
+    volumes:
+      - ./notebook_data:/app/data
+      # LOCAL: drop files into ./inbox/<Notebook name>/ on the host.
+      - ./inbox:/app/inbox
+    depends_on:
+      - surrealdb
+    restart: always
+    # LOCAL: hand the container the GPU so Docling's layout, table and OCR
+    # models run on the RTX 3090 instead of the CPU. The torch in the image is
+    # a CUDA build and Docling's device setting is "auto", so nothing else is
+    # needed. Verified 2026-09-15: a container from this image with the GPU
+    # flag sees the card via Docker Desktop's WSL2 passthrough.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -151,3 +151,18 @@ docker-compose.override.yml
 # Local QA/debug artifacts
 screenshot-*.png
 history.txt
+
+# Windows setup (windows/): runtime state, secrets, model files and logs
+windows/open-notebook/.env
+windows/open-notebook/surreal_data/
+windows/open-notebook/notebook_data/
+windows/open-notebook/inbox/
+windows/llama-server/bin/
+windows/llama-server/models/
+windows/llama-server/.hf-cache/
+windows/llama-server/logs/
+windows/llama-server/run/
+windows/notebook-control/run/
+windows/notebook-control/logs/
+windows/notebook-control/notebook.ico
+local_tests/.venv/

@@ -51,3 +51,11 @@ docs
 *.swo
 *~
 .DS_Store
+# Windows setup: never send its data, secrets or model files into a build
+windows/open-notebook/.env
+windows/open-notebook/surreal_data
+windows/open-notebook/notebook_data
+windows/open-notebook/inbox
+windows/llama-server
+windows/notebook-control
+local_tests
