@@ -1,5 +1,5 @@
 """Tests for the LOCAL index notifications in
-custom/overlay/commands/embedding_commands.py.
+commands/embedding_commands.py.
 
 The worker writes vectors to the database (chunks on embed_source, one vector
 on embed_note and embed_insight). After each write it tells the API, which
@@ -23,7 +23,6 @@ from pydantic import BaseModel
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "commands"
     / "embedding_commands.py"
 )

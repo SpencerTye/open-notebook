@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/api/routers/batch_transformations.py.
+"""Tests for api/routers/batch_transformations.py.
 
 The router is a LOCAL addition: it applies one transformation to every source in
 a notebook that does not already carry that transformation's insight.
@@ -47,7 +47,6 @@ _ensure_loguru()
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "api"
     / "routers"
     / "batch_transformations.py"

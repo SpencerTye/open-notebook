@@ -1,5 +1,5 @@
 """Tests for the LOCAL "missing" rebuild mode in
-custom/overlay/commands/embedding_commands.py.
+commands/embedding_commands.py.
 
 Upstream's Rebuild Embeddings knows two modes: "existing" (records that
 already carry a vector) and "all" (every record with content). Neither
@@ -20,7 +20,6 @@ from pydantic import BaseModel, ValidationError
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "commands"
     / "embedding_commands.py"
 )

@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/open_notebook/vector_index/ids.py.
+"""Tests for open_notebook/vector_index/ids.py.
 
 TurboVec identifies a vector by an unsigned 64-bit integer. The app identifies
 a record by a string such as ``source_embedding:0zqim8v38amup195oac9``. The
@@ -13,7 +13,6 @@ from pathlib import Path
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "open_notebook"
     / "vector_index"
     / "ids.py"

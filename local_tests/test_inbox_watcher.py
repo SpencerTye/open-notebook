@@ -1,4 +1,4 @@
-"""Tests for the inbox drop-folder watcher (custom/overlay/scripts/inbox_watcher.py).
+"""Tests for the inbox drop-folder watcher (scripts/inbox_watcher.py).
 
 The watcher talks to Open Notebook through a small client object; tests inject
 a fake so no server is needed.
@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 MODULE_PATH = (
-    Path(__file__).resolve().parents[1] / "overlay" / "scripts" / "inbox_watcher.py"
+    Path(__file__).resolve().parents[1] / "scripts" / "inbox_watcher.py"
 )
 
 

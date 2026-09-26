@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/open_notebook/vector_index/client.py.
+"""Tests for open_notebook/vector_index/client.py.
 
 The worker writes vectors to the database and must tell the API, which owns
 the index. Inside the API process the call goes straight to the store; from
@@ -16,8 +16,8 @@ from typing import Any, List, Optional
 
 import pytest
 
-OVERLAY = (
-    Path(__file__).resolve().parents[1] / "overlay" / "open_notebook" / "vector_index"
+REPO_ROOT = (
+    Path(__file__).resolve().parents[1] / "open_notebook" / "vector_index"
 )
 
 
@@ -42,7 +42,7 @@ _ensure_loguru()
 @pytest.fixture()
 def client():
     spec = importlib.util.spec_from_file_location(
-        "open_notebook.vector_index.client", OVERLAY / "client.py"
+        "open_notebook.vector_index.client", REPO_ROOT / "client.py"
     )
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module

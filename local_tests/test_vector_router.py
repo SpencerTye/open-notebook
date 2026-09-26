@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/api/routers/vector_index.py.
+"""Tests for api/routers/vector_index.py.
 
 Four endpoints on the API, which owns the index: status, upsert and remove
 (what the worker calls after writing or deleting vectors) and rebuild (on
@@ -37,7 +37,6 @@ _ensure_loguru()
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "api"
     / "routers"
     / "vector_index.py"

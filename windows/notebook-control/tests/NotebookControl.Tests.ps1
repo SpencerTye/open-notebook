@@ -448,11 +448,10 @@ Describe 'New-LlamaServerArgumentList' {
     $paths = Get-NotebookControlPaths
     $list = @(New-LlamaServerArgumentList)
 
-    It 'names our models.ini as the preset, quoted because the path contains a space' {
+    It 'names our models.ini as the preset, quoted when the path contains a space' {
         $i = [array]::IndexOf($list, '--models-preset')
         $i | Should Not Be -1
-        $list[$i + 1] | Should Match ([regex]::Escape($paths.ModelsIni))
-        $list[$i + 1] | Should Match '^"'
+        $list[$i + 1] | Should Be (ConvertTo-CommandLineArgument $paths.ModelsIni)
     }
 
     It 'listens on all interfaces on port 8080 with at most two models resident' {

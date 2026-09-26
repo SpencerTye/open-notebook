@@ -1,6 +1,6 @@
-"""Tests for the create_insight command in custom/overlay/commands/embedding_commands.py.
+"""Tests for the create_insight command in commands/embedding_commands.py.
 
-The overlay copy differs from upstream v1.14.0 in one place, marked LOCAL:
+This file differs from Open Notebook v1.14.0 in one place, marked LOCAL:
 after an insight is written, no embed_insight job is queued. Insights are
 embedded only when the operator runs Manage -> Advanced -> Rebuild Embeddings
 with the embedder loaded.
@@ -20,7 +20,6 @@ from pydantic import BaseModel
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "commands"
     / "embedding_commands.py"
 )
@@ -46,7 +45,7 @@ def _stub(name, **attrs):
 
 
 def load_module(queue: FakeQueue, rows):
-    """Load the overlay file with fakes for the queue, the database and the app."""
+    """Load the module with fakes for the queue, the database and the app."""
 
     class CommandInput(BaseModel):
         execution_context: Optional[Any] = None

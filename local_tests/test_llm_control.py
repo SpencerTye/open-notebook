@@ -1,10 +1,10 @@
-"""Tests for the LLM control router (custom/overlay/api/routers/llm_control.py).
+"""Tests for the LLM control router (api/routers/llm_control.py).
 
 The router is loaded straight from its file so these tests need only FastAPI,
 httpx and pydantic, not the whole Open Notebook backend. Run from the
 workspace root with a venv that has pytest:
 
-    python -m pytest open-notebook/custom/tests -q
+    python -m pytest local_tests -q
 """
 
 import importlib.util
@@ -18,7 +18,6 @@ from fastapi.testclient import TestClient
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "overlay"
     / "api"
     / "routers"
     / "llm_control.py"

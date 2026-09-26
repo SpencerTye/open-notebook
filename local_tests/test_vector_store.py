@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/open_notebook/vector_index/store.py.
+"""Tests for open_notebook/vector_index/store.py.
 
 The store owns the three TurboVec indexes (chunks, insights, notes) plus the
 map from record ids to index ids, keeps them in files under one folder, and
@@ -18,8 +18,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pytest
 
-OVERLAY = (
-    Path(__file__).resolve().parents[1] / "overlay" / "open_notebook" / "vector_index"
+REPO_ROOT = (
+    Path(__file__).resolve().parents[1] / "open_notebook" / "vector_index"
 )
 
 
@@ -42,7 +42,7 @@ _ensure_loguru()
 
 
 def _load(name: str, filename: str):
-    spec = importlib.util.spec_from_file_location(name, OVERLAY / filename)
+    spec = importlib.util.spec_from_file_location(name, REPO_ROOT / filename)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)

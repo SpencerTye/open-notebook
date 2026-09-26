@@ -3,17 +3,17 @@
 On the Source page's Insights tab each insight shows whether it has a
 vector. The information travels in one database query and one field:
 
-- ``Source.get_insights()`` (overlay ``open_notebook/domain/notebook.py``)
+- ``Source.get_insights()`` (``open_notebook/domain/notebook.py``)
   projects ``embedded`` with the same expression the Missing rebuild mode
   uses (``embedding != NONE AND array::len(embedding) > 0``) and omits the
   vector itself, so no array crosses the wire.
 - ``SourceInsight`` carries ``embedded`` as a read-only attribute that
   ``model_dump()`` never includes, so ``ObjectModel.save()`` (which writes
   ``model_dump()`` minus None) can never write it back to the table.
-- ``GET /sources/{id}/insights`` (overlay ``api/routers/sources.py``) passes
+- ``GET /sources/{id}/insights`` (``api/routers/sources.py``) passes
   it through as ``embedded`` on each ``SourceInsightResponse``.
 
-Both overlay modules are loaded by path with their imports stubbed; the
+Both modules are loaded by path with their imports stubbed; the
 router runs inside a real FastAPI app so the JSON body is the real one.
 """
 
@@ -29,10 +29,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-OVERLAY = Path(__file__).resolve().parents[1] / "overlay"
-NOTEBOOK_PATH = OVERLAY / "open_notebook" / "domain" / "notebook.py"
-SOURCES_ROUTER_PATH = OVERLAY / "api" / "routers" / "sources.py"
-MODELS_PATH = OVERLAY / "api" / "models.py"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+NOTEBOOK_PATH = REPO_ROOT / "open_notebook" / "domain" / "notebook.py"
+SOURCES_ROUTER_PATH = REPO_ROOT / "api" / "routers" / "sources.py"
+MODELS_PATH = REPO_ROOT / "api" / "models.py"
 
 
 def _stub(name: str, **attrs):

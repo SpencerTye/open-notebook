@@ -1,4 +1,4 @@
-"""Tests for custom/overlay/open_notebook/vector_index/search.py.
+"""Tests for open_notebook/vector_index/search.py.
 
 The search path takes candidates from the index, re-scores them with the exact
 vectors read from the database, and returns rows in the shape the database
@@ -18,8 +18,8 @@ from typing import Any, Dict, List
 import numpy as np
 import pytest
 
-OVERLAY = (
-    Path(__file__).resolve().parents[1] / "overlay" / "open_notebook" / "vector_index"
+REPO_ROOT = (
+    Path(__file__).resolve().parents[1] / "open_notebook" / "vector_index"
 )
 
 
@@ -42,7 +42,7 @@ _ensure_loguru()
 
 
 def _load(name: str, filename: str):
-    spec = importlib.util.spec_from_file_location(name, OVERLAY / filename)
+    spec = importlib.util.spec_from_file_location(name, REPO_ROOT / filename)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     spec.loader.exec_module(module)

@@ -1,4 +1,4 @@
-"""Tests for the null-character fix (custom/overlay/open_notebook/...).
+"""Tests for the null-character fix (open_notebook/...).
 
 SurrealDB refuses to store a string containing the null character (code 0):
 "Serialization error: to be serialized string contained a null byte". PDF
@@ -20,9 +20,9 @@ import ast
 import importlib.util
 from pathlib import Path
 
-OVERLAY = Path(__file__).resolve().parents[1] / "overlay" / "open_notebook"
-SANITIZE_PATH = OVERLAY / "utils" / "text_sanitize.py"
-SOURCE_GRAPH_PATH = OVERLAY / "graphs" / "source.py"
+REPO_ROOT = Path(__file__).resolve().parents[1] / "open_notebook"
+SANITIZE_PATH = REPO_ROOT / "utils" / "text_sanitize.py"
+SOURCE_GRAPH_PATH = REPO_ROOT / "graphs" / "source.py"
 
 
 def load_sanitize():
